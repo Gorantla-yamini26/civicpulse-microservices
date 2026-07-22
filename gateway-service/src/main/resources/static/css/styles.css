@@ -1,0 +1,114 @@
+/* Custom Glassmorphic Backdrop and Core Accent Tokens */
+.glassmorphism {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Custom Scrollbar Styles for Modern Dashboard Look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Wobble Keyframe Animation for Notification Bell Icon */
+@keyframes ring-wobble {
+  0% { transform: rotate(0); }
+  15% { transform: rotate(15deg); }
+  30% { transform: rotate(-15deg); }
+  45% { transform: rotate(10deg); }
+  60% { transform: rotate(-10deg); }
+  75% { transform: rotate(4deg); }
+  85% { transform: rotate(-4deg); }
+  100% { transform: rotate(0); }
+}
+
+.animate-bell-ring {
+  animation: ring-wobble 0.65s ease-in-out;
+}
+
+/* Smooth Form Hover & Transition Defaults */
+input, select, textarea, button {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Priority color badges */
+.priority-high {
+  background: rgba(244, 63, 94, 0.1);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.2);
+}
+
+.priority-medium {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.priority-low {
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+/* Status color badges */
+.status-open {
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.status-resolved {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-overdue {
+  background: rgba(225, 29, 72, 0.15);
+  color: #fb7185;
+  border: 1px solid rgba(225, 29, 72, 0.3);
+}
+
+/* Table Row Hover Accents */
+tr {
+  transition: background-color 0.2s ease;
+}
+
+tr:hover {
+  background-color: rgba(30, 41, 59, 0.3) !important;
+}
+
+/* --- Responsive Sidebar Display Rules --- */
+#sidebar-wrapper {
+  display: none;
+}
+
+#sidebar-wrapper.show-sidebar {
+  display: flex !important;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+}
+
+@media (min-width: 1024px) {
+  body.logged-in #sidebar-wrapper {
+    display: flex !important;
+    position: relative !important;
+  }
+}
