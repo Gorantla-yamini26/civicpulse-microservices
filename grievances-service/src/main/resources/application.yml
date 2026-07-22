@@ -1,0 +1,49 @@
+server:
+  port: 8093
+
+spring:
+  application:
+    name: grievance-service
+  datasource:
+    url: jdbc:postgresql://localhost:5433/grievance_db?serverTimezone=UTC
+    username: postgres
+    password: adminpassword
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  kafka:
+    bootstrap-servers: localhost:9094
+    consumer:
+      group-id: civicpulse-grievance-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8765/eureka/
+  instance:
+    prefer-ip-address: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: jdbc:postgresql://postgres-db:5432/grievance_db
+  kafka:
+    bootstrap-servers: kafka:29092
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-service:8765/eureka/
