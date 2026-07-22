@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CivicPulse Nexus | Command Dashboard</title>
+  
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: '#080B11',
+            container: '#0E131F',
+            header: '#121824',
+            emeraldHighlight: '#10B981',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            outfit: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Styling Overrides */
+    body {
+      background-color: #080B11;
+      color: #cbd5e1;
+    }
+    
+    .glassmorphism {
+      background: rgba(14, 19, 31, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #080B11;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+
+    /* Wobble Keyframe Animation for Bell */
+    @keyframes ring-wobble {
+      0% { transform: rotate(0); }
+      15% { transform: rotate(12deg); }
+      30% { transform: rotate(-12deg); }
+      45% { transform: rotate(8deg); }
+      60% { transform: rotate(-8deg); }
+      75% { transform: rotate(3deg); }
+      85% { transform: rotate(-3deg); }
+      100% { transform: rotate(0); }
+    }
+    .animate-bell-ring {
+      animation: ring-wobble 0.6s ease-in-out;
+    }
+
+    /* Badges */
+    .priority-high {
+      background: rgba(239, 68, 68, 0.1);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .priority-medium {
+      background: rgba(245, 158, 11, 0.1);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    .priority-low {
+      background: rgba(59, 130, 246, 0.1);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .status-open {
+      background: rgba(16, 185, 129, 0.1);
+      color: #10B981;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    .status-resolved {
+      background: rgba(59, 130, 246, 0.1);
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    .status-overdue {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Table row styling */
+    tr {
+      transition: background-color 0.2s ease;
+    }
+    tr:hover {
+      background-color: rgba(30, 41, 59, 0.25) !important;
+    }
+
+    @media (max-width: 1023px) {
+      aside {
+        position: fixed !important;
+        top: 0;
+        bottom: 0;
+        left: -100%;
+        z-index: 50;
+        height: 100vh;
+        transition: left 0.3s ease-in-out;
+      }
+      aside.show-sidebar {
+        left: 0 !important;
+        display: flex !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-[#080B11] text-slate-350 font-sans min-h-screen selection:bg-[#10B981] selection:text-[#080B11] overflow-x-hidden">
+
+  <!-- Core Page Wrapper -->
+  <div id="app" class="flex min-h-screen">
+
+    <!-- DECOUPLED ROLE-BASED SIDEBARS (Dynamically loaded when user is logged in) -->
+    
+    <!-- 1. CITIZEN SIDEBAR -->
+    <aside id="citizen-sidebar" class="w-72 bg-[#0E131F] border-r border-slate-800/60 flex-col justify-between hidden transition-all duration-300 z-30 shrink-0">
+      <div>
+        <div class="p-6 border-b border-slate-800/60 flex items-center gap-3.5 bg-slate-950/20">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#10B981] to-emerald-600 flex items-center justify-center text-slate-900 font-extrabold shadow-lg shadow-[#10B981]/25">
+            <i class="fa-solid fa-square-poll-vertical text-xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-outfit font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-[#10B981] bg-clip-text text-transparent">CivicPulse</h1>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Citizen Workspace</p>
+          </div>
+        </div>
+        <nav class="p-4 space-y-1.5">
+          <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Core Services</p>
+          <a href="#" data-view="citizen-dashboard" class="nav-link flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all text-[#10B981] bg-[#080B11] border-l-4 border-[#10B981]">
+            <i class="fa-solid fa-gauge-high"></i> Dashboard
+          </a>
+          <a href="#" data-view="citizen-new-grievance" class="nav-link flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-800/20 text-slate-400">
+            <i class="fa-solid fa-circle-plus"></i> Lodge Grievance
+          </a>
+          <a href="#" data-view="citizen-my-grievances" class="nav-link flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-800/20 text-slate-400">
+            <i class="fa-solid fa-receipt"></i> My Grievances
+          </a>
+          <a href="#" data-view="citizen-apply-certificate" class="nav-link flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-800/20 text-slate-400">
+            <i class="fa-solid fa-file-signature"></i> Apply for Certificate
+          </a>
+          <a href="#" data-view="citizen-track-applications" class="nav-link flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-800/20 text-slate-400">
+            <i class="fa-solid fa-folder-open"></i> Track Applications
+          </a>
+        </nav>
+      </div>
+      <div id="citizen-sidebar-footer" class="p-4 border-t border-slate-800/60 bg-slate-950/20"></div>
+    </aside>
+
+    <!-- 2. OFFICER SIDEBAR -->
+    <aside id="officer-sidebar" class="w-72 bg-[#0E131F] border-r border-slate-800/60 flex-col justify-between hidden transition-all duration-300 z-30 shrink-0">
+      <div>
+        <div class="p-6 border-b border-slate-800/60 flex items-center gap-3.5 bg-slate-950/20">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#10B981] to-emerald-600 flex items-center justify-center text-slate-900 font-extrabold shadow-lg shadow-[#10B981]/25">
+            <i class="fa-solid fa-user-shield text-xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-outfit font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-[#10B981] bg-clip-text text-transparent">CivicPulse</h1>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Officer Terminal</p>
+          </div>
+        </div>
+        <nav class="p-4 space-y-1.5">
+          <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Operations</p>
+          <a href="#" data-view="officer-dashboard" class="nav-link flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all text-[#10B981] bg-[#080B11] border-l-4 border-[#10B981]">
+            <i class="fa-solid fa-chart-line"></i> Operational Dashboard
+          </a>
+          <a href="#" data-view="officer-queue" class="nav-link flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-800/20 text-slate-400">
+            <i class="fa-solid fa-clipboard-list"></i> Grievance Work Queue
+          </a>
+          <a href="#" data-view="officer-verifications" class="nav-link flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-800/20 text-slate-400">
+            <i class="fa-solid fa-user-check"></i> Certificate Verification Portal
+          </a>
+        </nav>
+      </div>
+      <div id="officer-sidebar-footer" class="p-4 border-t border-slate-800/60 bg-slate-950/20"></div>
+    </aside>
+
+    <!-- 3. ADMIN SIDEBAR -->
+    <aside id="admin-sidebar" class="w-72 bg-[#0E131F] border-r border-slate-800/60 flex-col justify-between hidden transition-all duration-300 z-30 shrink-0">
+      <div>
+        <div class="p-6 border-b border-slate-800/60 flex items-center gap-3.5 bg-slate-950/20">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#10B981] to-emerald-600 flex items-center justify-center text-slate-900 font-extrabold shadow-lg shadow-[#10B981]/25">
+            <i class="fa-solid fa-sliders text-xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-outfit font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-[#10B981] bg-clip-text text-transparent">CivicPulse</h1>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Commissioner Console</p>
+          </div>
+        </div>
+        <nav class="p-4 space-y-1.5">
+          <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Systems Registry</p>
+          <a href="#" data-view="admin-overview" class="nav-link flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all text-[#10B981] bg-[#080B11] border-l-4 border-[#10B981]">
+            <i class="fa-solid fa-server"></i> Executive Overview
+          </a>
+          <a href="#" data-view="admin-master-tasks" class="nav-link flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-800/20 text-slate-400">
+            <i class="fa-solid fa-bars-progress"></i> All Master Tasks
+          </a>
+          <a href="#" data-view="admin-departments" class="nav-link flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-800/20 text-slate-400">
+            <i class="fa-solid fa-sitemap"></i> Manage Departments
+          </a>
+          <a href="#" data-view="admin-directory" class="nav-link flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-800/20 text-slate-400">
+            <i class="fa-solid fa-address-book"></i> Officers Directory
+          </a>
+        </nav>
+      </div>
+      <div id="admin-sidebar-footer" class="p-4 border-t border-slate-800/60 bg-slate-950/20"></div>
+    </aside>
+
+    <!-- CONTENT WRAPPER -->
+    <div id="content-wrapper" class="flex-grow flex flex-col min-h-screen relative w-full overflow-hidden">
+      
+      <!-- TOP GLASSMORPHIC HEADER -->
+      <header id="main-header" class="sticky top-0 z-40 bg-[#080B11]/85 backdrop-blur-md border-b border-slate-800/60 px-6 py-4 flex items-center justify-between hidden">
+        <div class="flex items-center gap-2">
+          <!-- Toggle Hamburger Menu (Mobile) -->
+          <button id="mobile-toggle" class="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-850 block lg:hidden">
+            <i class="fa-solid fa-bars text-slate-300"></i>
+          </button>
+          <div class="text-xs font-bold text-slate-400 font-outfit uppercase tracking-widest hidden sm:block" id="header-page-title">
+            Dashboard
+          </div>
+        </div>
+
+        <div class="flex items-center gap-5">
+          <!-- Simulation Sandbox Selector -->
+          <div class="flex items-center bg-slate-950/80 border border-slate-800 rounded-full px-3 py-1 text-[10px] font-bold select-none cursor-pointer" id="mode-toggle-btn">
+            <span class="w-2 h-2 rounded-full bg-[#10B981] mr-2 animate-ping" id="mode-glow"></span>
+            Mode: <span id="current-mode-label" class="text-slate-100 ml-1">SANDBOX</span>
+          </div>
+
+          <!-- YouTube-Style Bell Alert Center -->
+          <div class="relative">
+            <button id="bell-btn" class="relative w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-850 flex items-center justify-center transition-all duration-300 group">
+              <i class="fa-regular fa-bell text-lg text-slate-400 group-hover:text-[#10B981] transition-colors"></i>
+              <span id="bell-badge" class="absolute -top-1.5 -right-1.5 bg-rose-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#080B11] shadow-lg shadow-rose-600/30 scale-0 transition-transform duration-300">0</span>
+            </button>
+  
+            <!-- Hidden Floating Notification Dropdown -->
+            <div id="notification-dropdown" class="absolute right-0 mt-3 w-96 bg-[#0E131F] border border-slate-800/80 rounded-2xl shadow-2xl backdrop-blur-xl hidden transform origin-top-right transition-all duration-300 scale-95 opacity-0 z-50 overflow-hidden">
+              <div class="p-4 border-b border-slate-800/60 flex items-center justify-between bg-slate-950/20">
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-bell text-[#10B981]"></i>
+                  <h3 class="font-bold text-sm text-slate-200">System Notifications</h3>
+                </div>
+                <button id="clear-notifications" class="text-xs text-slate-500 hover:text-rose-400 transition-colors">Clear All</button>
+              </div>
+              <div id="notification-list" class="max-h-80 overflow-y-auto divide-y divide-slate-800/40">
+                <div class="p-4 text-center text-xs text-slate-500 py-8">
+                  <i class="fa-solid fa-inbox text-2xl mb-2 text-slate-700 block"></i>
+                  No alerts logged.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- MAIN CONTAINER AREA -->
+      <main class="flex-grow flex p-6 items-center justify-center w-full max-w-full">
+
+        <!-- 1. AUTHENTICATION SECTION (Login & Signup Gate) -->
+        <section id="auth-section" class="w-full max-w-md bg-[#0E131F] border border-slate-800/60 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+          <div class="absolute -top-24 -left-24 w-48 h-48 bg-[#10B981]/5 rounded-full blur-3xl"></div>
+          <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-[#10B981]/5 rounded-full blur-3xl"></div>
+
+          <div class="text-center mb-8 relative z-10">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#10B981] to-emerald-600 mx-auto flex items-center justify-center text-slate-900 font-extrabold shadow-xl shadow-[#10B981]/15 mb-4">
+              <i class="fa-solid fa-square-poll-vertical text-2xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold tracking-tight text-white font-outfit">Welcome to CivicPulse</h2>
+            <p class="text-sm text-slate-400 mt-1">Access secure municipal command workspace</p>
+          </div>
+
+          <!-- Login / Signup toggler -->
+          <div class="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800/80 mb-6 relative z-10">
+            <button id="tab-login" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-white transition-all">Sign In</button>
+            <button id="tab-register" class="flex-1 py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-white transition-all">Sign Up</button>
+          </div>
+
+          <div id="auth-msg" class="hidden mb-4 p-3.5 rounded-xl border text-sm font-medium transition-all"></div>
+
+          <form id="auth-form" class="space-y-4 relative z-10">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+              <div class="relative">
+                <i class="fa-regular fa-envelope absolute left-4 top-3.5 text-slate-500"></i>
+                <input type="email" id="auth-email" placeholder="name@civicpulse.gov" class="w-full pl-11 pr-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white" required>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Password</label>
+              <div class="relative">
+                <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-500"></i>
+                <input type="password" id="auth-password" placeholder="••••••••••••" class="w-full pl-11 pr-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white" required>
+              </div>
+            </div>
+
+            <!-- Role Selector: ONLY visible during registration state -->
+            <div id="register-role-wrapper" class="hidden transition-all">
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Workspace Role</label>
+              <div class="relative">
+                <i class="fa-solid fa-user-shield absolute left-4 top-3.5 text-slate-500"></i>
+                <select id="auth-role" class="w-full pl-11 pr-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white appearance-none">
+                  <option value="CITIZEN">Citizen (Report problems & certificates)</option>
+                  <option value="FIELD_OFFICER">Field Officer (Verification & tasks)</option>
+                  <option value="ADMIN">Administrator (Systems overview & assignments)</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-500 pointer-events-none text-xs"></i>
+              </div>
+            </div>
+
+            <button type="submit" id="auth-submit-btn" class="w-full py-3.5 bg-[#10B981] hover:bg-emerald-500 text-slate-950 font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all text-sm">
+              Access Dashboard
+            </button>
+          </form>
+        </section>
+
+        <!-- 2. CITIZEN VIEWS CONTAINER -->
+        <div id="citizen-views" class="w-full max-w-7xl hidden space-y-6 self-start">
+          
+          <!-- View: Citizen Dashboard -->
+          <div id="citizen-dashboard-view" class="space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 class="text-2xl font-bold font-outfit text-white">Resident Gateway</h2>
+                <p class="text-sm text-slate-400 font-medium">Track your active grievances, municipal certificates, and SLA schedules.</p>
+              </div>
+            </div>
+
+            <!-- Counters Grid -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-[#0E131F] border border-slate-800/60 p-5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">My Logged Tickets</p>
+                  <h3 id="citizen-stat-total" class="text-2xl font-extrabold text-white mt-1.5">0</h3>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-slate-400">
+                  <i class="fa-solid fa-receipt text-lg"></i>
+                </div>
+              </div>
+              <div class="bg-[#0E131F] border border-slate-800/60 p-5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">My Active Pending</p>
+                  <h3 id="citizen-stat-pending" class="text-2xl font-extrabold text-amber-500 mt-1.5">0</h3>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-amber-500/20 text-amber-500">
+                  <i class="fa-solid fa-hourglass-half text-lg animate-pulse"></i>
+                </div>
+              </div>
+              <div class="bg-[#0E131F] border border-slate-800/60 p-5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">My Solved Tickets</p>
+                  <h3 id="citizen-stat-solved" class="text-2xl font-extrabold text-[#10B981] mt-1.5">0</h3>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-[#10B981]/20 text-[#10B981]">
+                  <i class="fa-solid fa-circle-check text-lg"></i>
+                </div>
+              </div>
+              <div class="bg-[#0E131F] border border-slate-800/60 p-5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">My SLA Breaches</p>
+                  <h3 id="citizen-stat-breaches" class="text-2xl font-extrabold text-rose-500 mt-1.5">0</h3>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-rose-500/20 text-rose-500">
+                  <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Two Clean Tables Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- Active Grievances Table -->
+              <div class="bg-[#0E131F] border border-slate-800/60 rounded-2xl overflow-hidden shadow-xl flex flex-col">
+                <div class="p-5 border-b border-slate-800/60 flex items-center justify-between bg-slate-950/20">
+                  <h3 class="font-bold text-sm text-slate-200"><i class="fa-solid fa-circle-exclamation mr-2 text-[#10B981]"></i> My Active Grievances</h3>
+                  <button onclick="navigateToView('citizen-my-grievances')" class="text-xs text-[#10B981] hover:underline font-bold">View Registry</button>
+                </div>
+                <div class="overflow-x-auto flex-grow">
+                  <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr class="bg-[#121824] text-slate-400 font-semibold border-b border-slate-800">
+                        <th class="p-4">Ticket ID</th>
+                        <th class="p-4">Title</th>
+                        <th class="p-4">Priority</th>
+                        <th class="p-4">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="citizen-active-grievances-tbody" class="divide-y divide-slate-800/40">
+                      <!-- Rendered dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Certificate Applications Table -->
+              <div class="bg-[#0E131F] border border-slate-800/60 rounded-2xl overflow-hidden shadow-xl flex flex-col">
+                <div class="p-5 border-b border-slate-800/60 flex items-center justify-between bg-slate-950/20">
+                  <h3 class="font-bold text-sm text-slate-200"><i class="fa-solid fa-file-invoice mr-2 text-[#10B981]"></i> My Certificate Applications</h3>
+                  <button onclick="navigateToView('citizen-track-applications')" class="text-xs text-[#10B981] hover:underline font-bold">Track Status</button>
+                </div>
+                <div class="overflow-x-auto flex-grow">
+                  <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr class="bg-[#121824] text-slate-400 font-semibold border-b border-slate-800">
+                        <th class="p-4">Application ID</th>
+                        <th class="p-4">Type</th>
+                        <th class="p-4">Applicant</th>
+                        <th class="p-4">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="citizen-dashboard-certs-tbody" class="divide-y divide-slate-800/40">
+                      <!-- Rendered dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- View: Lodge Grievance Form -->
+          <div id="citizen-new-grievance-view" class="space-y-6 hidden">
+            <div>
+              <h2 class="text-2xl font-bold font-outfit text-white">Lodge Official Grievance</h2>
+              <p class="text-sm text-slate-400">File a complaint to be assigned to our field operators. SLA schedules calculate automatically.</p>
+            </div>
+            <div class="bg-[#0E131F] border border-slate-800/60 rounded-2xl max-w-2xl p-6 shadow-xl">
+              <form id="lodge-grievance-form" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Complaint Subject / Summary</label>
+                  <input type="text" id="grievance-title" placeholder="e.g. Clean water main pipeline rupture on Main Road" class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white" required>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Target Municipal Department</label>
+                    <div class="relative">
+                      <select id="grievance-category" class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white appearance-none">
+                        <option value="Utilities & Water Supply">Utilities & Water Supply</option>
+                        <option value="Public Works & Roads">Public Works & Roads</option>
+                        <option value="Sanitation & Waste Management">Sanitation & Waste Management</option>
+                        <option value="Revenue & Taxation">Revenue & Taxation</option>
+                        <option value="Town Planning & Licensing">Town Planning & Licensing</option>
+                        <option value="Street Lighting & Energy">Street Lighting & Energy</option>
+                        <option value="Public Health & Environment">Public Health & Environment</option>
+                        <option value="Other">Other General Grievance</option>
+                      </select>
+                      <i class="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-500 pointer-events-none text-xs"></i>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Urgency Level & SLA</label>
+                    <div class="relative">
+                      <select id="grievance-priority" class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white appearance-none">
+                        <option value="LOW">Low Urgency (10 Days SLA Window)</option>
+                        <option value="MEDIUM">Medium Urgency (5 Days SLA Window)</option>
+                        <option value="HIGH">High Emergency (2 Days SLA Window)</option>
+                      </select>
+                      <i class="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-500 pointer-events-none text-xs"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Municipal Ward / Zone</label>
+                    <div class="relative">
+                      <select id="grievance-ward" class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white appearance-none">
+                        <option value="Ward 1 (North Metro)">Ward 1 - North Zone</option>
+                        <option value="Ward 2 (South Boulevard)">Ward 2 - South Zone</option>
+                        <option value="Ward 3 (East Sector)">Ward 3 - East Zone</option>
+                        <option value="Ward 4 (West Precinct)">Ward 4 - West Zone</option>
+                        <option value="Ward 5 (Central Civic)">Ward 5 - Central Zone</option>
+                        <option value="Ward 6 (Suburban Belt)">Ward 6 - Suburban Zone</option>
+                        <option value="Ward 7 (Industrial Hub)">Ward 7 - Industrial Zone</option>
+                      </select>
+                      <i class="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-500 pointer-events-none text-xs"></i>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Citizen Phone Number</label>
+                    <input type="tel" id="grievance-phone" placeholder="+91 98765 43210" class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white" required>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Street Address / Door No.</label>
+                    <input type="text" id="grievance-street" placeholder="Door No., Street name" class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white" required>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Prominent Landmark</label>
+                    <input type="text" id="grievance-landmark" placeholder="e.g. Near Metro Station Gate 2" class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">City / Town</label>
+                    <input type="text" id="grievance-city" placeholder="e.g. Metropolis" class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white" required>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Postal Pin Code</label>
+                    <input type="text" id="grievance-pincode" placeholder="e.g. 500001" class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white" required>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Detailed Narrative & Escalation Notes</label>
+                  <textarea id="grievance-desc" rows="3" placeholder="Provide full context, severity level, affected residents count, and specific instructions for field operators." class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white resize-none" required></textarea>
+                </div>
+
+                <!-- Attachment Upload Simulation -->
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Upload Photo / Evidence Scan (Optional)</label>
+                  <div class="border border-dashed border-slate-800 hover:border-[#10B981]/50 rounded-xl p-4 text-center bg-slate-950/30 cursor-pointer transition-colors" onclick="document.getElementById('grievance-file-input').click()">
+                    <i class="fa-solid fa-camera text-slate-500 mr-2"></i>
+                    <span class="text-xs text-slate-400">Click to upload photo evidence (JPG, PNG, PDF max 5MB)</span>
+                    <input type="file" id="grievance-file-input" class="hidden">
+                  </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 border-t border-slate-800/60">
+                  <button type="button" onclick="navigateToView('citizen-dashboard')" class="px-5 py-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-xs font-semibold text-slate-400 transition-all">Cancel</button>
+                  <button type="submit" class="px-5 py-2.5 bg-[#10B981] hover:bg-emerald-500 text-slate-950 font-bold rounded-xl shadow-lg active:scale-95 transition-all text-xs">File Official Complaint</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- View: Citizen My Grievances -->
+          <div id="citizen-my-grievances-view" class="space-y-6 hidden">
+            <div>
+              <h2 class="text-2xl font-bold font-outfit text-white">Grievance Activity Log</h2>
+              <p class="text-sm text-slate-400">Registry of complaints filed by your account context.</p>
+            </div>
+            <div class="bg-[#0E131F] border border-slate-800/60 rounded-2xl overflow-hidden shadow-xl">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm border-collapse">
+                  <thead>
+                    <tr class="bg-[#121824] text-slate-400 font-semibold border-b border-slate-800/80">
+                      <th class="p-4">Tracking ID</th>
+                      <th class="p-4">Complaint Description</th>
+                      <th class="p-4">Category</th>
+                      <th class="p-4">Priority</th>
+                      <th class="p-4">Filed On</th>
+                      <th class="p-4">SLA Deadline</th>
+                      <th class="p-4">Status</th>
+                      <th class="p-4">Assigned Officer</th>
+                    </tr>
+                  </thead>
+                  <tbody id="citizen-my-grievances-tbody" class="divide-y divide-slate-800/40 text-xs">
+                    <!-- Rendered dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- View: Apply for Certificate Form -->
+          <div id="citizen-apply-certificate-view" class="space-y-6 hidden">
+            <div>
+              <h2 class="text-2xl font-bold font-outfit text-white">Apply for Official Government Certificate / License</h2>
+              <p class="text-sm text-slate-400">Submit verified applications to municipal archives for official issuance.</p>
+            </div>
+            
+            <div class="bg-[#0E131F] border border-slate-800/60 rounded-2xl max-w-3xl p-6 shadow-xl">
+              <!-- Inline Amber Warning Block (Anti-Duplicate) -->
+              <div id="duplicate-warning-block" class="hidden mb-4 p-4 rounded-xl border border-amber-800 bg-amber-950/40 text-amber-500 text-sm font-semibold flex items-start gap-3">
+                <i class="fa-solid fa-triangle-exclamation text-lg mt-0.5"></i>
+                <div>
+                  <h4 class="font-bold">Application Duplicate Warning</h4>
+                  <p class="text-xs text-amber-400/90 mt-0.5">Error: You already have an active application under this certificate category.</p>
+                </div>
+              </div>
+
+              <div id="cert-success-block" class="hidden mb-4 p-4 rounded-xl border border-emerald-800 bg-emerald-950/45 text-emerald-400 text-sm font-semibold"></div>
+
+              <form id="apply-certificate-form" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Certificate / License Category</label>
+                  <div class="relative">
+                    <select id="cert-type" onchange="renderDynamicCertFields(this.value)" class="w-full px-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-[#10B981] text-sm text-white appearance-none font-semibold">
+                      <option value="BIRTH_CERTIFICATE">Birth Certificate</option>
+                      <option value="DEATH_CERTIFICATE">Death Certificate</option>
+                      <option value="INCOME_CERTIFICATE">Income Certificate</option>
+                      <option value="RESIDENCE_CERTIFICATE">Residence / Domicile Certificate</option>
+                      <option value="CASTE_CERTIFICATE">Caste & Social Welfare Certificate</option>
+                      <option value="TRADE_LICENSE">Municipal Trade License</option>
+                      <option value="BUILDING_PERMIT">Building Permit & Construction Clearance</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-500 pointer-events-none text-xs"></i>
+                  </div>
+                </div>
+
+                <!-- Dynamically populated certificate input fields container -->
+                <div id="dynamic-cert-fields-container" class="space-y-4 pt-1">
+                  <!-- Injected via app.js -->
+                </div>
+
+                <!-- Stylized Mock Drag-and-drop -->
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Upload Required Credential Proofs (Aadhaar / ID / Address Proof Scan)</label>
+                  <div class="border-2 border-dashed border-slate-800 hover:border-[#10B981]/50 rounded-xl p-6 text-center bg-slate-950/20 cursor-pointer transition-colors" onclick="document.getElementById('mock-file-input').click()">
+                    <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-500 mb-2"></i>
+                    <p class="text-xs text-slate-400">Drag files here or <span class="text-[#10B981] hover:underline font-bold">browse files</span></p>
+                    <p class="text-[10px] text-slate-500 mt-1">Supports PDF, JPEG, PNG (Max 5MB)</p>
+                    <input type="file" id="mock-file-input" class="hidden">
+                  </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 border-t border-slate-800/60">
+                  <button type="button" onclick="navigateToView('citizen-dashboard')" class="px-5 py-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-xs font-semibold text-slate-400 transition-all">Cancel</button>
+                  <button type="submit" class="px-5 py-2.5 bg-[#10B981] hover:bg-emerald-500 text-slate-950 font-bold rounded-xl shadow-lg active:scale-95 transition-all text-xs">File Official Application</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- View: Citizen Track Applications -->
+          <div id="citizen-track-applications-view" class="space-y-6 hidden">
+            <div>
+              <h2 class="text-2xl font-bold font-outfit text-white">Application Status Flow</h2>
+              <p class="text-sm text-slate-400">Track and download issued documents dynamically.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              
+              <!-- App List Table -->
+              <div class="lg:col-span-2 bg-[#0E131F] border border-slate-800/60 rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-4 border-b border-slate-800/60 bg-slate-950/20">
+                  <h3 class="font-bold text-sm text-slate-200">Active Records</h3>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-sm border-collapse">
+                    <thead>
+                      <tr class="bg-[#121824] text-slate-400 font-semibold border-b border-slate-800 text-xs">
+                        <th class="p-4">App Number</th>
+                        <th class="p-4">Type</th>
+                        <th class="p-4">Applicant</th>
+                        <th class="p-4">Applied Date</th>
+                        <th class="p-4 text-right">Selection</th>
+                      </tr>
+                    </thead>
+                    <tbody id="citizen-track-tbody" class="divide-y divide-slate-800/40 text-xs">
+                      <!-- Rendered dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Selected App Stepper Flow -->
+              <div class="bg-[#0E131F] border border-slate-800/60 p-6 rounded-2xl shadow-xl space-y-6" id="stepper-card-container">
+                <div class="border-b border-slate-800/60 pb-3 text-center">
+                  <h3 class="font-bold text-sm text-slate-200">State Parameters Stepper</h3>
+                  <p class="text-[10px] text-slate-500 mt-0.5" id="stepper-app-id">Select an application to track</p>
+                </div>
+
+                <div class="relative pl-8 space-y-6 border-l-2 border-slate-800" id="vertical-stepper-wrapper">
+                  <!-- Stepper components rendered dynamically -->
+                  <div class="text-xs text-slate-500 text-center py-8 italic">No record active. Select one from the grid.</div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800/60" id="stepper-download-action">
+                  <!-- Unlocked Download Action -->
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 3. FIELD OFFICER VIEWS CONTAINER -->
+        <div id="officer-views" class="w-full max-w-7xl hidden space-y-6 self-start">
+          
+          <!-- View: Officer Dashboard -->
+          <div id="officer-dashboard-view" class="space-y-6">
+            <div>
+              <h2 class="text-2xl font-bold font-outfit text-white">Operations Dashboard</h2>
+              <p class="text-sm text-slate-400 font-medium">Telemetry overview for assigned tasks and pending verifications.</p>
+            </div>
+
+            <!-- Health Boxes -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-[#0E131F] border border-slate-800/60 p-5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Assignments</p>
+                  <h3 id="officer-stat-total" class="text-2xl font-extrabold text-white mt-1.5">0</h3>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-slate-400">
+                  <i class="fa-solid fa-list-check text-lg"></i>
+                </div>
+              </div>
+              <div class="bg-[#0E131F] border border-slate-800/60 p-5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pending Verifications</p>
+                  <h3 id="officer-stat-verifications" class="text-2xl font-extrabold text-amber-500 mt-1.5">0</h3>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-amber-500/20 text-amber-500">
+                  <i class="fa-solid fa-folder-open text-lg"></i>
+                </div>
+              </div>
+              <div class="bg-[#0E131F] border border-slate-800/60 p-5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Completed Actions</p>
+                  <h3 id="officer-stat-solved" class="text-2xl font-extrabold text-[#10B981] mt-1.5">0</h3>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-[#10B981]/25 text-[#10B981]">
+                  <i class="fa-solid fa-circle-check text-lg"></i>
+                </div>
+              </div>
+              <div class="bg-[#0E131F] border border-slate-800/60 p-5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Expired / Overdue Breach</p>
+                  <h3 id="officer-stat-overdue" class="text-2xl font-extrabold text-rose-500 mt-1.5">0</h3>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-rose-500/25 text-rose-500">
+                  <i class="fa-solid fa-stopwatch text-lg"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Operational SLA Chart & Summary -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div class="lg:col-span-2 bg-[#0E131F] border border-slate-800/60 p-6 rounded-2xl shadow-xl flex flex-col justify-between">
+                <div>
+                  <h3 class="font-bold text-base text-slate-200 border-b border-slate-800/60 pb-3 mb-4"><i class="fa-solid fa-circle-info text-[#10B981] mr-2"></i> Field Operator Briefing</h3>
+                  <p class="text-xs text-slate-400 leading-relaxed mb-4">
+                    Grievance tasks allocated to your email address are mapped directly into your workspace. Select 'Grievance Work Queue' to mark tasks completed and log timelines. Verify, approve, or reject certificate credentials within the 'Certificate Verification Portal'.
+                  </p>
+                  <div class="p-3 bg-slate-950/40 border border-slate-800 rounded-xl flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] animate-pulse"></span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Telemetry highlight parameter online</span>
+                  </div>
+                </div>
+                <div class="pt-4 flex gap-4">
+                  <button onclick="navigateToView('officer-queue')" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-750 text-xs font-bold rounded-xl border border-slate-700 transition-all text-white">Work Queue</button>
+                  <button onclick="navigateToView('officer-verifications')" class="px-4 py-2.5 bg-[#10B981] hover:bg-emerald-500 text-slate-950 text-xs font-bold rounded-xl transition-all">Verification Portal</button>
+                </div>
+              </div>
+
+              <!-- Personal Chart -->
+              <div class="bg-[#0E131F] border border-slate-800/60 p-6 rounded-2xl shadow-xl flex flex-col items-center justify-between">
+                <div class="w-full border-b border-slate-800/60 pb-3 mb-4">
+                  <h3 class="font-bold text-sm text-slate-200"><i class="fa-solid fa-chart-pie mr-2 text-[#10B981]"></i> Personal SLA Graph</h3>
+                </div>
+                <div class="relative w-full h-[150px] flex items-center justify-center">
+                  <canvas id="officer-chart"></canvas>
+                </div>
+                <div class="w-full grid grid-cols-3 text-center text-xs mt-6 pt-4 border-t border-slate-800/60 gap-2">
+                  <div>
+                    <span class="block w-2.5 h-2.5 rounded-full bg-[#10B981] mx-auto mb-1"></span>
+                    <span class="text-slate-450 text-[10px]">Open</span>
+                    <strong id="officer-chart-legend-open" class="text-white block mt-0.5">0</strong>
+                  </div>
+                  <div>
+                    <span class="block w-2.5 h-2.5 rounded-full bg-blue-500 mx-auto mb-1"></span>
+                    <span class="text-slate-455 text-[10px]">Solved</span>
+                    <strong id="officer-chart-legend-solved" class="text-white block mt-0.5">0</strong>
+                  </div>
+                  <div>
+                    <span class="block w-2.5 h-2.5 rounded-full bg-rose-500 mx-auto mb-1"></span>
+                    <span class="text-slate-450 text-[10px]">Overdue</span>
+                    <strong id="officer-chart-legend-overdue" class="text-white block mt-0.5">0</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- View: Grievance Work Queue -->
+          <div id="officer-queue-view" class="space-y-6 hidden">
+            <div>
+              <h2 class="text-2xl font-bold font-outfit text-white">Grievance Work Queue</h2>
+              <p class="text-sm text-slate-400">Incoming complaints assigned to your operator context.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              
+              <!-- Grievance Queue Grid -->
+              <div class="lg:col-span-2 bg-[#0E131F] border border-slate-800/60 rounded-2xl overflow-hidden shadow-xl">
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-sm border-collapse">
+                    <thead>
+                      <tr class="bg-[#121824] text-slate-400 font-semibold border-b border-slate-800 text-xs">
+                        <th class="p-4">Ticket Number</th>
+                        <th class="p-4">Title / Location</th>
+                        <th class="p-4">Priority</th>
+                        <th class="p-4">Status</th>
+                        <th class="p-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="officer-tasks-tbody" class="divide-y divide-slate-800/40 text-xs">
+                      <!-- Rendered dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Selected Task Timeline View -->
+              <div class="bg-[#0E131F] border border-slate-800/60 p-6 rounded-2xl shadow-xl space-y-5" id="timeline-card-container">
+                <div class="border-b border-slate-800/60 pb-3 text-center">
+                  <h3 class="font-bold text-sm text-slate-200">Grievance Timeline Tracking</h3>
+                  <p class="text-[10px] text-slate-500 mt-0.5" id="timeline-app-id">Select a task to review timeline details</p>
+                </div>
+
+                <div class="relative pl-8 space-y-6 border-l-2 border-slate-800" id="vertical-timeline-wrapper">
+                  <div class="text-xs text-slate-500 text-center py-8 italic">No ticket selected. Select one from the queue.</div>
+                </div>
+
+                <div id="timeline-action-wrapper" class="pt-4 border-t border-slate-800/60">
+                  <!-- Completion action button -->
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- View: Certificate Verification Portal -->
+          <div id="officer-verifications-view" class="space-y-6 hidden">
+            <div>
+              <h2 class="text-2xl font-bold font-outfit text-white">Certificate Verification Portal</h2>
+              <p class="text-sm text-slate-400">Verify resident credentials, trigger approvals, or record refusal logs.</p>
+            </div>
+            
+            <div class="bg-[#0E131F] border border-slate-800/60 rounded-2xl overflow-hidden shadow-xl">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm border-collapse">
+                  <thead>
+                    <tr class="bg-[#121824] text-slate-400 font-semibold border-b border-slate-800 text-xs">
+                      <th class="p-4">App Number</th>
+                      <th class="p-4">Service Category</th>
+                      <th class="p-4">Applicant Name</th>
+                      <th class="p-4">Aadhaar Number</th>
+                      <th class="p-4">Verification</th>
+                      <th class="p-4">Approval</th>
+                      <th class="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="officer-verifications-tbody" class="divide-y divide-slate-800/40 text-xs">
+                    <!-- Rendered dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 4. ADMINISTRATIVE WORKSPACE -->
+        <div id="admin-views" class="w-full max-w-7xl hidden space-y-6 self-start">
+          
+          <!-- View: Executive Overview -->
+          <div id="admin-overview-view" class="space-y-6">
+            <div>
+              <h2 class="text-2xl font-bold font-outfit text-white">Commissioner Operations Console</h2>
+              <p class="text-sm text-slate-400 font-medium">Global platform metrics, user registries, and operational SLA distributions.</p>
+            </div>
+
+            <!-- Scorecards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-[#0E131F] border border-slate-800/60 p-5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Users</p>
+                  <h3 id="admin-stat-users" class="text-2xl font-extrabold text-white mt-1.5">0</h3>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-slate-400">
+                  <i class="fa-solid fa-users text-lg"></i>
+                </div>
+              </div>
+              <div class="bg-[#0E131F] border border-slate-800/60 p-5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global System Complaints</p>
+                  <h3 id="admin-stat-total" class="text-2xl font-extrabold text-white mt-1.5">0</h3>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-slate-400">
+                  <i class="fa-solid fa-folder-open text-lg"></i>
+                </div>
+              </div>
+              <div class="bg-[#0E131F] border border-slate-800/60 p-5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global Solved Closures</p>
+                  <h3 id="admin-stat-solved" class="text-2xl font-extrabold text-[#10B981] mt-1.5">0</h3>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-[#10B981]/25 text-[#10B981]">
+                  <i class="fa-solid fa-square-check text-lg"></i>
+                </div>
+              </div>
+              <div class="bg-[#0E131F] border border-slate-800/60 p-5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global Overdue Breaches</p>
+                  <h3 id="admin-stat-overdue" class="text-2xl font-extrabold text-rose-500 mt-1.5">0</h3>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-rose-500/25 text-rose-500">
+                  <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Global distribution layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div class="lg:col-span-2 bg-[#0E131F] border border-slate-800/60 p-6 rounded-2xl shadow-xl flex flex-col justify-between">
+                <div>
+                  <h3 class="font-bold text-base text-slate-200 border-b border-slate-800/60 pb-3 mb-4"><i class="fa-solid fa-shield text-[#10B981] mr-2"></i> Global Systems Intelligence</h3>
+                  <p class="text-xs text-slate-400 leading-relaxed mb-4">
+                    Track the operational efficiency parameters of municipal services. The administrator has master overrides to allocate tasks, assign department priorities, manage active categories, and register municipal officers. Use the menu panel to access registry logs.
+                  </p>
+                </div>
+                <div class="pt-4 flex gap-4">
+                  <button onclick="navigateToView('admin-master-tasks')" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-750 text-xs font-bold rounded-xl border border-slate-700 transition-all text-white">All Master Tasks</button>
+                  <button onclick="navigateToView('admin-directory')" class="px-4 py-2.5 bg-[#10B981] hover:bg-emerald-500 text-slate-950 text-xs font-bold rounded-xl transition-all">Officers Directory</button>
+                </div>
+              </div>
+
+              <!-- Global status distribution pie chart -->
+              <div class="bg-[#0E131F] border border-slate-800/60 p-6 rounded-2xl shadow-xl flex flex-col items-center justify-between">
+                <div class="w-full border-b border-slate-800/60 pb-3 mb-4">
+                  <h3 class="font-bold text-sm text-slate-200"><i class="fa-solid fa-chart-pie mr-2 text-[#10B981]"></i> Status Distributions</h3>
+                </div>
+                <div class="relative w-full h-[150px] flex items-center justify-center">
+                  <canvas id="admin-chart"></canvas>
+                </div>
+                <div class="w-full grid grid-cols-3 text-center text-xs mt-6 pt-4 border-t border-slate-800/60 gap-2">
+                  <div>
+                    <span class="block w-2.5 h-2.5 rounded-full bg-[#10B981] mx-auto mb-1"></span>
+                    <span class="text-slate-400 text-[10px]">Open</span>
+                    <strong id="admin-chart-legend-open" class="text-white block mt-0.5">0</strong>
+                  </div>
+                  <div>
+                    <span class="block w-2.5 h-2.5 rounded-full bg-blue-500 mx-auto mb-1"></span>
+                    <span class="text-slate-400 text-[10px]">Solved</span>
+                    <strong id="admin-chart-legend-solved" class="text-white block mt-0.5">0</strong>
+                  </div>
+                  <div>
+                    <span class="block w-2.5 h-2.5 rounded-full bg-rose-500 mx-auto mb-1"></span>
+                    <span class="text-slate-400 text-[10px]">Overdue</span>
+                    <strong id="admin-chart-legend-overdue" class="text-white block mt-0.5">0</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- View: All Master Tasks Registry -->
+          <div id="admin-master-tasks-view" class="space-y-6 hidden">
+            <div>
+              <h2 class="text-2xl font-bold font-outfit text-white">All Master Tasks Registry</h2>
+              <p class="text-sm text-slate-400 font-medium font-sans">Full transactional control over both citizen grievances and certificate applications.</p>
+            </div>
+            
+            <div class="bg-[#0E131F] border border-slate-800/60 rounded-2xl overflow-hidden shadow-xl">
+              <div class="border-b border-slate-800/60 p-4 bg-slate-950/20 flex gap-4">
+                <span class="text-xs font-bold text-slate-400">Filter Registry type:</span>
+                <div class="flex gap-4 text-xs font-bold">
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="radio" name="admin-task-filter" value="ALL" checked onchange="loadAdminMasterTasks()" class="accent-[#10B981]"> All System Tasks
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="radio" name="admin-task-filter" value="GRIEVANCE" onchange="loadAdminMasterTasks()" class="accent-[#10B981]"> Grievances Only
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="radio" name="admin-task-filter" value="CERTIFICATE" onchange="loadAdminMasterTasks()" class="accent-[#10B981]"> Certificate Apps Only
+                  </label>
+                </div>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm border-collapse">
+                  <thead>
+                    <tr class="bg-[#121824] text-slate-400 font-semibold border-b border-slate-800 text-xs">
+                      <th class="p-4">Ticket / App Number</th>
+                      <th class="p-4">Record Details</th>
+                      <th class="p-4">Type / Category</th>
+                      <th class="p-4">Status</th>
+                      <th class="p-4">Applicant / Creator</th>
+                      <th class="p-4 text-right">Assignee Allocation</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-master-tasks-tbody" class="divide-y divide-slate-800/40 text-xs">
+                    <!-- Rendered dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- View: Manage Departments -->
+          <div id="admin-departments-view" class="space-y-6 hidden">
+            <div>
+              <h2 class="text-2xl font-bold font-outfit text-white">Manage Departments</h2>
+              <p class="text-sm text-slate-400">Map municipal categories to responsible field departments and track active officer staffing.</p>
+            </div>
+            
+            <div id="admin-departments-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <!-- Rendered dynamically in app.js -->
+            </div>
+          </div>
+
+          <!-- View: Officers Directory -->
+          <div id="admin-directory-view" class="space-y-6 hidden">
+            <div>
+              <h2 class="text-2xl font-bold font-outfit text-white">Field Officers Directory</h2>
+              <p class="text-sm text-slate-400 font-sans">Authorized operator credentials logged on the server.</p>
+            </div>
+            
+            <div class="bg-[#0E131F] border border-slate-800/60 rounded-2xl overflow-hidden shadow-xl">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm border-collapse">
+                  <thead>
+                    <tr class="bg-[#121824] text-slate-400 font-semibold border-b border-slate-800 text-xs">
+                      <th class="p-4">Officer ID</th>
+                      <th class="p-4">Email Address</th>
+                      <th class="p-4">Assigned Role</th>
+                      <th class="p-4">Active Tasks</th>
+                      <th class="p-4">Operational Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-directory-tbody" class="divide-y divide-slate-800/40 text-xs">
+                    <!-- Rendered dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </main>
+
+      <!-- REJECTION DIALOGUE / MODAL -->
+      <div id="rejection-modal" class="fixed inset-0 z-50 bg-[#020617]/85 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-[#0E131F] border border-slate-800/80 w-full max-w-md rounded-2xl overflow-hidden shadow-2xl p-6 space-y-4">
+          <h3 class="font-bold text-base text-slate-200 font-outfit"><i class="fa-solid fa-circle-xmark mr-2 text-rose-500"></i> Enter Rejection Reason</h3>
+          <p class="text-xs text-slate-400">A mandatory reason explaining why the application is rejected must be sent to the resident.</p>
+          <textarea id="rejection-reason-text" rows="3" class="w-full px-4 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-rose-500 text-white resize-none" placeholder="Documents invalid, expired ID scan..."></textarea>
+          <div class="flex justify-end gap-3 pt-2">
+            <button id="rejection-cancel-btn" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-750 text-xs font-semibold text-slate-450">Cancel</button>
+            <button id="rejection-submit-btn" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold">Reject Application</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER SYSTEM INFO -->
+      <footer class="bg-slate-950/40 border-t border-slate-900/60 py-4 px-6 flex flex-col md:flex-row items-center justify-between text-[11px] text-slate-500 gap-4 mt-auto">
+        <div>
+          <span>Gateway Status: </span>
+          <span id="gateway-status" class="font-semibold text-[#10B981]"><i class="fa-solid fa-circle-check mr-1 animate-pulse"></i> Active</span>
+        </div>
+        <div>
+          <span>Connection: </span>
+          <span class="font-semibold text-slate-400">JWT Secured Ingress API</span>
+        </div>
+        <div>
+          <span>&copy; 2026 CivicPulse Inc. All rights reserved.</span>
+        </div>
+      </footer>
+
+    </div>
+
+  </div>
+
+  <!-- Javascript Logic -->
+  <script src="js/app.js"></script>
+</body>
+</html>
